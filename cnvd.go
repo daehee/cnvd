@@ -42,6 +42,7 @@ func CrawlCNVD() ([]Vuln, error) {
 	items := make([]Vuln, 0)
 
 	cookies, err := getCookies()
+	log.Printf("setting cookies: %s", cookies)
 
 	c := colly.NewCollector(
 		colly.AllowedDomains("www.cnvd.org.cn"),
