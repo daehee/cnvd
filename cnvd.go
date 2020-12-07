@@ -176,6 +176,7 @@ func getCookies() (string, error) {
 	options := []chromedp.ExecAllocatorOption{
 		chromedp.Headless,
 		chromedp.DisableGPU,
+		chromedp.UserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/87.0.4280.88 Safari/537.36"),
 		chromedp.Flag("ignore-certificate-errors", "1"),
 	}
 	// if env has GOOGLE_CHROME_SHIM
