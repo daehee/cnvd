@@ -41,11 +41,13 @@ type Vuln struct {
 func CrawlCNVD() ([]Vuln, error) {
 	items := make([]Vuln, 0)
 
+	cookies, err := getCookies()
+
 	c := colly.NewCollector(
 		colly.AllowedDomains("www.cnvd.org.cn"),
 	)
 	c.SetRequestTimeout(15 * time.Second)
-	err := c.Limit(&colly.LimitRule{
+	err = c.Limit(&colly.LimitRule{
 		DomainGlob:  "*cnvd.*",
 		Parallelism: 2,
 		RandomDelay: 5 * time.Second,
@@ -54,6 +56,24 @@ func CrawlCNVD() ([]Vuln, error) {
 		log.Fatal(err)
 	}
 	extensions.RandomUserAgent(c)
+
+	c.OnRequest(func(r *colly.Request) {
+		r.Headers.Set("Connection", "keep-alive")
+		// r.Headers.Set("Cache-Control", "max-age=0")
+		// r.Headers.Set("Upgrade-Insecure-Requests", "1")
+		r.Headers.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/87.0.4280.88 Safari/537.36")
+		// r.Headers.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+		// r.Headers.Set("Origin", "https://www.cnvd.org.cn/")
+		// r.Headers.Set("Content-Type", "application/x-www-form-urlencoded")
+		// r.Headers.Set("Sec-Fetch-Site", "none")
+		// r.Headers.Set("Sec-Fetch-Mode", "navigate")
+		// r.Headers.Set("Sec-Fetch-User", "?!")
+		// r.Headers.Set("Sec-Fetch-Dest", "document")
+		// r.Headers.Set("Referer", "https://www.cnvd.org.cn/")
+		r.Headers.Set("Cookie", cookies)
+		log.Printf("indexCollector visiting %s\n", r.URL.String())
+		fmt.Printf("Headers:\n%+v\n", r.Headers)
+	})
 
 	detailCollector := c.Clone()
 	extensions.RandomUserAgent(detailCollector)
