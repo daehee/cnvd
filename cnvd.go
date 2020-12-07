@@ -93,6 +93,10 @@ func CrawlCNVD() ([]Vuln, error) {
 		log.Printf("indexCollector visiting %s\n", r.URL.String())
 	})
 
+	c.OnError(func(r *colly.Response, err error) {
+		fmt.Printf("Request URL: %s\nFailed with response: %d %s\nError: %+v\n", r.Request.URL, r.StatusCode, r.Body, err)
+	})
+
 	detailCollector.OnRequest(func(r *colly.Request) {
 		log.Printf("detailCollector visiting %s", r.URL.String())
 	})
@@ -138,13 +142,21 @@ func CrawlCNVD() ([]Vuln, error) {
 		postData["max"] = "100"
 		postData["offset"] = strconv.Itoa(i)
 		// Using the POST method, tested the cnvd front end to use the post method to display the next page
-		err := c.Post(fmt.Sprintf("%s?flag=true", baseURL), postData)
+		err = nextBaseRequest(c, postData)
 		if err != nil {
-			return nil, fmt.Errorf("error requesting POST loop: %v\n", err)
+			return nil, err
 		}
 	}
 
 	return items, nil
+}
+
+func nextBaseRequest(c *colly.Collector, postData map[string]string) error {
+	err := c.Post(fmt.Sprintf("%s?flag=true", baseURL), postData)
+	if err != nil {
+		return fmt.Errorf("error requesting POST loop: %v\n", err)
+	}
+	return nil
 }
 
 func parseCNHazard(cn string) (en string) {
