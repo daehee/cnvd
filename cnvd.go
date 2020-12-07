@@ -140,7 +140,7 @@ func CrawlCNVD() ([]Vuln, error) {
 		// Using the POST method, tested the cnvd front end to use the post method to display the next page
 		err := c.Post(fmt.Sprintf("%s?flag=true", baseURL), postData)
 		if err != nil {
-			log.Printf("error requesting POST loop: %v\n", err)
+			return nil, fmt.Errorf("error requesting POST loop: %v\n", err)
 		}
 	}
 
