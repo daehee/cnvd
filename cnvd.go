@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/cdproto/page"
+	"github.com/chromedp/chromedp"
 	"github.com/gocolly/colly"
 	"github.com/gocolly/colly/extensions"
-	"github.com/chromedp/cdproto/network"
-	"github.com/chromedp/chromedp"
 )
 
 const (
@@ -55,7 +55,7 @@ func CrawlCNVD() ([]Vuln, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	extensions.RandomUserAgent(c)
+	// extensions.RandomUserAgent(c)
 
 	c.OnRequest(func(r *colly.Request) {
 		r.Headers.Set("Connection", "keep-alive")
@@ -202,19 +202,18 @@ func getCookies() (string, error) {
 			cookieSep := "; "
 			lastIdx := len(ck) - 1
 			for i, c := range ck {
-			    if i == lastIdx {
-			        cookieSep = ""
+				if i == lastIdx {
+					cookieSep = ""
 				}
 				cookies += fmt.Sprintf("%s=%s%s", c.Name, c.Value, cookieSep)
 			}
 
 			return nil
 		}),
-
 	})
 
 	if err != nil {
-	    return "", err
+		return "", err
 	}
 
 	// TODO Fail if cookie doesn't contain required values:
