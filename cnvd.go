@@ -43,6 +43,9 @@ func CrawlCNVD() ([]Vuln, error) {
 
 	cookies, err := getCookies()
 	log.Printf("setting cookies: %s", cookies)
+	if err != nil {
+	    return nil, fmt.Errorf("error setting cookies: %v", err)
+	}
 
 	c := colly.NewCollector(
 		colly.AllowedDomains("www.cnvd.org.cn"),
@@ -228,9 +231,9 @@ func getCookies() (string, error) {
 		return "", err
 	}
 
-	// TODO Fail if cookie doesn't contain required values:
-	// __jsluid_s=
-	// __jsl_clearance_s=
+	if !strings.Contains(cookies, "__jsluid_s") || !strings.Contains(cookies, "__jsl_clearance_s") {
+		return "", fmt.Errorf("required cookie values not set: %s", cookies)
+	}
 
 	return cookies, nil
 }
