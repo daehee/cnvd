@@ -168,7 +168,18 @@ func CrawlCNVD() ([]Vuln, error) {
 
 func getCookies() (string, error) {
 	var cookies string
-	ctx, cancel := chromedp.NewContext(context.Background())
+
+	options := []chromedp.ExecAllocatorOption{
+		chromedp.Headless,
+		chromedp.DisableGPU,
+		chromedp.Flag("ignore-certificate-errors", "1"),
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 20)
+	defer cancel()
+	allocCtx, cancel := chromedp.NewExecAllocator(ctx, options...)
+	defer cancel()
+	taskCtx, cancel := chromedp.NewContext(allocCtx)
 	defer cancel()
 
 	// chromedp.ListenTarget(ctx, func(event interface{}) {
@@ -180,7 +191,7 @@ func getCookies() (string, error) {
 	// 	}
 	// })
 
-	err := chromedp.Run(ctx, chromedp.Tasks{
+	err := chromedp.Run(taskCtx, chromedp.Tasks{
 		// bypass selenium webdriver detection
 		chromedp.ActionFunc(func(cxt context.Context) error {
 			_, err := page.AddScriptToEvaluateOnNewDocument("Object.defineProperty(navigator, 'webdriver', { get: () => false, });").Do(cxt)
