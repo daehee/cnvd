@@ -1,6 +1,7 @@
 package cnvd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
@@ -8,8 +9,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chromedp/cdproto/page"
 	"github.com/gocolly/colly"
 	"github.com/gocolly/colly/extensions"
+	"github.com/chromedp/cdproto/network"
+	"github.com/chromedp/chromedp"
 )
 
 const (
@@ -40,7 +44,7 @@ func CrawlCNVD() ([]Vuln, error) {
 	c := colly.NewCollector(
 		colly.AllowedDomains("www.cnvd.org.cn"),
 	)
-	c.SetRequestTimeout(10 * time.Second)
+	c.SetRequestTimeout(15 * time.Second)
 	err := c.Limit(&colly.LimitRule{
 		DomainGlob:  "*cnvd.*",
 		Parallelism: 2,
@@ -149,6 +153,65 @@ func CrawlCNVD() ([]Vuln, error) {
 	}
 
 	return items, nil
+}
+
+func getCookies() (string, error) {
+	var cookies string
+	ctx, cancel := chromedp.NewContext(context.Background())
+	defer cancel()
+
+	// chromedp.ListenTarget(ctx, func(event interface{}) {
+	// 	switch responseReceivedEvent := event.(type) {
+	// 	case *network.EventResponseReceived:
+	// 		response := responseReceivedEvent.Response
+	// 		fmt.Printf("Request: %s\n", response.RequestHeadersText)
+	// 		fmt.Printf("Response: %d %+v\n", response.Status, response.Headers)
+	// 	}
+	// })
+
+	err := chromedp.Run(ctx, chromedp.Tasks{
+		// bypass selenium webdriver detection
+		chromedp.ActionFunc(func(cxt context.Context) error {
+			_, err := page.AddScriptToEvaluateOnNewDocument("Object.defineProperty(navigator, 'webdriver', { get: () => false, });").Do(cxt)
+			if err != nil {
+				return err
+			}
+			return nil
+		}),
+		// navigate to site
+		chromedp.Navigate("https://www.cnvd.org.cn/flaw/list.htm"),
+		// read network values
+		chromedp.Sleep(time.Second * 5),
+
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			ck, err := network.GetAllCookies().Do(ctx)
+			if err != nil {
+				return err
+			}
+
+			cookieSep := "; "
+			lastIdx := len(ck) - 1
+			for i, c := range ck {
+			    if i == lastIdx {
+			        cookieSep = ""
+				}
+				cookies += fmt.Sprintf("%s=%s%s", c.Name, c.Value, cookieSep)
+			}
+
+			return nil
+		}),
+
+	})
+
+	if err != nil {
+	    return "", err
+	}
+
+	// TODO Fail if cookie doesn't contain required values:
+	// __jsluid_s=
+	// __jsl_clearance_s=
+
+	return cookies, nil
 }
 
 func nextBaseRequest(c *colly.Collector, postData map[string]string) error {
