@@ -75,7 +75,7 @@ func CrawlCNVD() ([]Vuln, error) {
 		log.Printf("visiting %s", r.URL.String())
 	})
 	c.OnError(func(r *colly.Response, err error) {
-		fmt.Printf("Request URL: %s\nFailed with response: %d %s\nError: %+v\n", r.Request.URL, r.StatusCode, r.Body, err)
+		log.Printf("Request URL: %s\nFailed with response: %d %s\nError: %+v\n", r.Request.URL, r.StatusCode, r.Body, err)
 	})
 
 	detailCollector := c.Clone()
@@ -112,7 +112,7 @@ func CrawlCNVD() ([]Vuln, error) {
 				Date:   publishedDate,
 			}
 			items = append(items, cnvdItem)
-			fmt.Printf("detailCollector failed request for %s, grabbing top level only", id)
+			log.Printf("detailCollector failed request for %s, grabbing top level only", id)
 		}
 	})
 
