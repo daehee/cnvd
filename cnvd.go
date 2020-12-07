@@ -71,8 +71,10 @@ func CrawlCNVD() ([]Vuln, error) {
 		// r.Headers.Set("Sec-Fetch-Dest", "document")
 		// r.Headers.Set("Referer", "https://www.cnvd.org.cn/")
 		r.Headers.Set("Cookie", cookies)
-		log.Printf("indexCollector visiting %s\n", r.URL.String())
-		fmt.Printf("Headers:\n%+v\n", r.Headers)
+		log.Printf("visiting %s", r.URL.String())
+	})
+	c.OnError(func(r *colly.Response, err error) {
+		fmt.Printf("Request URL: %s\nFailed with response: %d %s\nError: %+v\n", r.Request.URL, r.StatusCode, r.Body, err)
 	})
 
 	detailCollector := c.Clone()
@@ -111,18 +113,6 @@ func CrawlCNVD() ([]Vuln, error) {
 			items = append(items, cnvdItem)
 			fmt.Printf("detailCollector failed request for %s, grabbing top level only", id)
 		}
-	})
-
-	c.OnRequest(func(r *colly.Request) {
-		log.Printf("indexCollector visiting %s\n", r.URL.String())
-	})
-
-	c.OnError(func(r *colly.Response, err error) {
-		fmt.Printf("Request URL: %s\nFailed with response: %d %s\nError: %+v\n", r.Request.URL, r.StatusCode, r.Body, err)
-	})
-
-	detailCollector.OnRequest(func(r *colly.Request) {
-		log.Printf("detailCollector visiting %s", r.URL.String())
 	})
 
 	detailCollector.OnHTML("body > div.mw.Main.clearfix > div.blkContainer > div.blkContainerPblk > div.blkContainerSblk ", func(e *colly.HTMLElement) {
