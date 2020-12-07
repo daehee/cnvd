@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -176,6 +177,10 @@ func getCookies() (string, error) {
 		chromedp.Headless,
 		chromedp.DisableGPU,
 		chromedp.Flag("ignore-certificate-errors", "1"),
+	}
+	// if env has GOOGLE_CHROME_SHIM
+	chromeBin, exists := os.LookupEnv("GOOGLE_CHROME_SHIM"); if exists {
+	    options = append(options, chromedp.ExecPath(chromeBin))
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 20)
